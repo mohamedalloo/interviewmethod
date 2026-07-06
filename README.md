@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# interviewmethod
 
-## Getting Started
+Brutal AI mock interviews with a hiring-manager scorecard — the feedback nobody will give you.
 
-First, run the development server:
+## Positioning (from market research, July 2026)
+
+- **Whitespace:** "Roast" positioning is proven for resumes but unclaimed for interviews. No candidate-side product's hero artifact is a hiring-manager-style scorecard.
+- **Tailwind:** Google Interview Warmup retired April 2026 (free-tier vacuum); Yoodli pivoted to enterprise; the copilot cluster (Final Round AI etc.) is reputationally toxic (cheating stigma, 3.6–3.9 Trustpilot, refund complaints) — we position explicitly as the ethical practice tool.
+- **Pricing:** One-time credits, not subscription (job seekers are cash-strapped; churn in this category is brutal; competitors are attacked for billing traps).
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+ANTHROPIC_API_KEY=sk-ant-... npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without `ANTHROPIC_API_KEY`, the app runs in **demo mode**: canned interviewer questions and a sample scorecard so the full flow is testable.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/page.tsx` — landing page
+- `app/interview/page.tsx` — setup → chat interview → scorecard UI
+- `app/api/interview/route.ts` — Claude (`claude-opus-4-8`) plays a skeptical hiring manager; one question per turn, 5 questions, probing follow-ups
+- `app/api/scorecard/route.ts` — structured-output scorecard: verdict, 5 scored dimensions, weak phrases quoted verbatim, each answer rewritten stronger, "what the interviewer told the recruiter"
+- `lib/interview.ts` — prompts + scorecard JSON schema; `lib/demo.ts` — demo-mode data
 
-## Learn More
+## Launch checklist
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [ ] Set `ANTHROPIC_API_KEY` and test a live interview end to end
+- [ ] Deploy (Vercel: `npx vercel`)
+- [ ] Domain: interviewmethod.com is TAKEN (registered 2018, GoDaddy, Cloudflare-parked). interviewmethod.ai and interviewmethod.io appeared AVAILABLE as of 2026-07-06 — or negotiate for the .com
+- [ ] Add rate limiting / auth before opening to public traffic (every interview costs API tokens)
+- [ ] Stripe payment for credit packs ($19 / 5 interviews, $49 / 20)
+- [ ] Shareable scorecard image (og-image per scorecard) — the viral artifact
+- [ ] TikTok content: "I let an AI hiring manager roast my interview answers" (proven format: 16M+ views case study for a competitor)
