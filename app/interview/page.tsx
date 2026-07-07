@@ -5,6 +5,12 @@ import Link from "next/link";
 import type { ChatMessage, Scorecard, Setup } from "@/lib/interview";
 import { QUESTION_COUNT } from "@/lib/interview";
 import { DEMO_QUESTIONS, DEMO_SCORECARD } from "@/lib/demo";
+import {
+  clientInterviewer,
+  clientScorecard,
+  getStoredKey,
+  setStoredKey,
+} from "@/lib/client-ai";
 
 // Static deploys (GitHub Pages) have no API routes — run demo mode in-browser.
 const IS_STATIC = process.env.NEXT_PUBLIC_STATIC === "1";
@@ -119,8 +125,12 @@ export default function InterviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [showKeyField, setShowKeyField] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const liveByok = IS_STATIC && apiKey.length > 0;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -128,7 +138,13 @@ export default function InterviewPage() {
 
   useEffect(() => {
     setSpeechSupported(getSpeechRecognition() !== null);
+    setApiKey(getStoredKey());
   }, []);
+
+  function saveKey(value: string) {
+    setApiKey(value.trim());
+    setStoredKey(value);
+  }
 
   function toggleRecording() {
     if (recording) {
@@ -173,6 +189,29 @@ export default function InterviewPage() {
   async function callInterviewer(history: ChatMessage[]) {
     setLoading(true);
     setError(null);
+    if (liveByok) {
+      try {
+        const questionsAsked = history.filter((m) => m.role === "assistant").length;
+        const isLast = questionsAsked >= QUESTION_COUNT;
+        const message = await clientInterviewer(apiKey, setup, history, isLast);
+        setDemo(false);
+        const next = [...history, { role: "assistant" as const, content: message }];
+        setMessages(next);
+        if (isLast) {
+          setPhase("grading");
+          await generateScorecard(next);
+        }
+      } catch (e) {
+        setError(
+          e instanceof Error
+            ? `Live AI error: ${e.message}`
+            : "Live AI call failed — check your API key."
+        );
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     if (IS_STATIC) {
       await new Promise((r) => setTimeout(r, 700));
       const idx = Math.min(
@@ -215,6 +254,16 @@ export default function InterviewPage() {
   }
 
   async function generateScorecard(history: ChatMessage[]) {
+    if (liveByok) {
+      try {
+        const sc = await clientScorecard(apiKey, setup, history);
+        setScorecard(sc);
+        setPhase("scorecard");
+      } catch {
+        setError("Scorecard generation failed — refresh to retry.");
+      }
+      return;
+    }
     if (IS_STATIC) {
       await new Promise((r) => setTimeout(r, 1500));
       setScorecard(DEMO_SCORECARD);
@@ -265,9 +314,14 @@ export default function InterviewPage() {
             Question {Math.min(questionsAsked, QUESTION_COUNT)} of {QUESTION_COUNT}
           </span>
         )}
-        {demo && (
+        {liveByok && (
+          <span className="text-xs px-2 py-1 rounded bg-emerald-900/50 text-emerald-300 border border-emerald-700">
+            Live AI — using your key
+          </span>
+        )}
+        {demo && !liveByok && (
           <span className="text-xs px-2 py-1 rounded bg-amber-900/50 text-amber-300 border border-amber-700">
-            Demo mode — set ANTHROPIC_API_KEY for live interviews
+            Demo mode — add an API key below for live interviews
           </span>
         )}
       </header>
@@ -340,6 +394,83 @@ export default function InterviewPage() {
             <p className="text-xs text-zinc-500 text-center">
               {QUESTION_COUNT} questions · ~15 minutes · scorecard at the end
             </p>
+
+            {IS_STATIC && (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+                {liveByok && !showKeyField ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-emerald-300">
+                      ✓ Live AI enabled — interviews run with your Anthropic key.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowKeyField(true)}
+                      className="text-xs text-zinc-400 underline hover:text-zinc-200"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : !showKeyField ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-zinc-400">
+                      This preview runs a canned demo.{" "}
+                      <span className="text-zinc-300">
+                        Have an Anthropic API key?
+                      </span>{" "}
+                      Run it fully live — real questions on your real answers.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowKeyField(true)}
+                      className="text-xs whitespace-nowrap rounded border border-emerald-700 text-emerald-300 px-3 py-1.5 hover:bg-emerald-900/30"
+                    >
+                      Go live
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium text-zinc-300">
+                      Anthropic API key (sk-ant-…)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        defaultValue={apiKey}
+                        placeholder="sk-ant-api03-…"
+                        className="flex-1 rounded bg-zinc-950 border border-zinc-700 px-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveKey((e.target as HTMLInputElement).value);
+                            setShowKeyField(false);
+                          }
+                        }}
+                        id="byokInput"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(
+                            "byokInput"
+                          ) as HTMLInputElement;
+                          saveKey(el.value);
+                          setShowKeyField(false);
+                        }}
+                        className="rounded bg-emerald-700 hover:bg-emerald-600 px-3 py-2 text-xs font-semibold"
+                      >
+                        Save
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                      Stored only in your browser (localStorage) and sent only to
+                      api.anthropic.com. A full interview + scorecard costs roughly
+                      $0.50–0.80 of API usage. Clear it anytime by saving an empty
+                      field.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </form>
         </main>
       )}
