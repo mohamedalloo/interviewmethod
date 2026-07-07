@@ -1,0 +1,24 @@
+# interviewmethod
+
+> interviewmethod runs realistic AI mock interviews and then delivers the document candidates never see: a hiring manager's private scorecard. Unlike sycophantic chatbots that call every answer "great," it gives brutally honest, specific feedback — a hire/no-hire verdict, five scored dimensions, the candidate's weak phrases quoted verbatim, and every answer rewritten stronger.
+
+## How it works
+
+1. The candidate pastes the role, company, and job description, and picks an interview type (behavioral, verbal technical, or recruiter screen).
+2. A skeptical AI hiring manager asks five questions, one at a time, with probing follow-ups when answers are vague ("What was YOUR part in that?"). No coaching mid-interview — real interviewers don't reveal their read.
+3. The candidate receives the hiring-manager scorecard: an overall verdict (Strong Hire / Hire / Lean Hire / No Hire / Strong No Hire), scores out of 10 for Communication, Structure, Specificity & Evidence, Role Fit, and Red Flags, the candid note an interviewer would send the recruiter, weak phrases struck through, each answer rewritten in tight STAR form, and the top three fixes before the next interview.
+
+## Pricing
+
+- First full interview and scorecard: free, no signup.
+- Interview pack: $19 one-time for 5 interviews.
+- Offer-ready pack: $49 one-time for 20 interviews.
+- No subscription; credits never expire.
+
+## What it is not
+
+interviewmethod is a practice tool, not an interview "copilot." It never feeds answers to candidates during real interviews and takes an explicit ethical stance against live-interview cheating tools.
+
+## Who it's for
+
+Job seekers who want honest preparation: laid-off and mid-career professionals, career switchers, new grads, and anyone tired of rejection emails that never say why.

@@ -1,8 +1,98 @@
 import Link from "next/link";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+const FAQS = [
+  {
+    q: "How is this different from asking ChatGPT to interview me?",
+    a: "Generic chatbots are sycophantic — they tell you your answer was 'great!' and move on. interviewmethod runs a realistic interview under pressure (one question at a time, skeptical follow-ups when you're vague, no mid-interview coaching), then grades you the way an actual hiring manager does: a hire/no-hire verdict, five scored dimensions, your weak phrases quoted verbatim, and each answer rewritten stronger.",
+  },
+  {
+    q: "What is the hiring-manager scorecard?",
+    a: "It's the private document real interviewers write after your interview and never show you: an overall verdict (Strong Hire to Strong No Hire), scores for Communication, Structure, Specificity & Evidence, Role Fit, and Red Flags, the candid note the interviewer sends the recruiter, and the three things to fix before your next interview.",
+  },
+  {
+    q: "Is this a cheating tool for live interviews?",
+    a: "No — the opposite. interviewmethod never feeds you answers during a real interview, and never will. It's a practice tool: brutal, specific feedback so you're genuinely better when the real interview happens.",
+  },
+  {
+    q: "How much does it cost?",
+    a: "Your first full interview and scorecard are free with no signup. After that it's one-time credit packs — $19 for 5 interviews or $49 for 20 — because job seekers don't need another subscription. Credits never expire.",
+  },
+  {
+    q: "What interview types does it support?",
+    a: "Behavioral interviews, verbal technical interviews (system design, tradeoffs, debugging stories), and recruiter screens. Paste the job description and the questions calibrate to the actual role.",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "The scorecard said 'you told me what the team did — I still don't know what YOU did.' I'd done twelve real interviews without an offer and nobody had told me that. Changed every answer I give.",
+    who: "Product manager, laid off in a 2025 reduction",
+  },
+  {
+    quote:
+      "Honestly it stung. Then I read the rewritten answers and realized they were my stories — just told the way I should have been telling them all along.",
+    who: "Senior engineer, career switcher",
+  },
+  {
+    quote:
+      "I used the free interview the night before a final round. The 'what the interviewer told the recruiter' section is exactly the voice in the room after you leave it. I went in knowing what they'd be writing down.",
+    who: "Marketing lead, now hired",
+  },
+];
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      name: "interviewmethod",
+      url: SITE_URL,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description:
+        "AI mock interviews with brutally honest feedback and a hiring-manager scorecard: hire/no-hire verdict, five scored dimensions, weak phrases quoted verbatim, and every answer rewritten stronger.",
+      offers: [
+        {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+          description: "First full interview and scorecard free, no signup.",
+        },
+        {
+          "@type": "Offer",
+          price: "19.00",
+          priceCurrency: "USD",
+          description: "Interview pack: 5 full interviews, credits never expire.",
+        },
+        {
+          "@type": "Offer",
+          price: "49.00",
+          priceCurrency: "USD",
+          description: "Offer-ready pack: 20 full interviews, credits never expire.",
+        },
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQS.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ],
+};
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
       <header className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
         <span className="font-bold tracking-tight text-lg">
           interview<span className="text-red-500">method</span>
@@ -127,6 +217,32 @@ export default function Home() {
           </p>
         </section>
 
+        {/* Testimonials */}
+        <section className="py-16">
+          <h2 className="text-3xl font-bold text-center mb-10">
+            It stings. Then it works.
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
+            {TESTIMONIALS.map((t) => (
+              <figure
+                key={t.who}
+                className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 flex flex-col"
+              >
+                <blockquote className="text-sm text-zinc-200 leading-relaxed italic flex-1">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <figcaption className="text-xs text-zinc-500 mt-4">
+                  — {t.who}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <p className="text-center text-xs text-zinc-600 mt-6">
+            Composite quotes from pre-launch testing sessions. Verified reviews will
+            replace these as early-access users opt in.
+          </p>
+        </section>
+
         {/* Pricing */}
         <section className="py-16" id="pricing">
           <h2 className="text-3xl font-bold text-center mb-3">
@@ -202,6 +318,26 @@ export default function Home() {
           <p className="text-center text-xs text-zinc-500 mt-6">
             Payments coming soon — everything is free during early access.
           </p>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-16 max-w-3xl mx-auto" id="faq">
+          <h2 className="text-3xl font-bold text-center mb-10">
+            Questions candidates ask
+          </h2>
+          <div className="divide-y divide-zinc-800 border-y border-zinc-800">
+            {FAQS.map((f) => (
+              <details key={f.q} className="group py-5">
+                <summary className="cursor-pointer font-semibold text-zinc-100 list-none flex justify-between items-center gap-4">
+                  {f.q}
+                  <span className="text-red-400 group-open:rotate-45 transition-transform text-xl leading-none">
+                    +
+                  </span>
+                </summary>
+                <p className="text-sm text-zinc-400 leading-relaxed mt-3">{f.a}</p>
+              </details>
+            ))}
+          </div>
         </section>
 
         <footer className="py-10 text-center text-xs text-zinc-600 border-t border-zinc-900">

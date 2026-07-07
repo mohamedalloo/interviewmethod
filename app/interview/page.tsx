@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { ChatMessage, Scorecard, Setup } from "@/lib/interview";
 import { QUESTION_COUNT } from "@/lib/interview";
+import { DEMO_QUESTIONS, DEMO_SCORECARD } from "@/lib/demo";
+
+// Static deploys (GitHub Pages) have no API routes — run demo mode in-browser.
+const IS_STATIC = process.env.NEXT_PUBLIC_STATIC === "1";
 
 type Phase = "setup" | "interview" | "grading" | "scorecard";
 
@@ -38,6 +42,25 @@ export default function InterviewPage() {
   async function callInterviewer(history: ChatMessage[]) {
     setLoading(true);
     setError(null);
+    if (IS_STATIC) {
+      await new Promise((r) => setTimeout(r, 700));
+      const idx = Math.min(
+        history.filter((m) => m.role === "assistant").length,
+        DEMO_QUESTIONS.length - 1
+      );
+      setDemo(true);
+      const next = [
+        ...history,
+        { role: "assistant" as const, content: DEMO_QUESTIONS[idx] },
+      ];
+      setMessages(next);
+      setLoading(false);
+      if (idx === DEMO_QUESTIONS.length - 1) {
+        setPhase("grading");
+        await generateScorecard(next);
+      }
+      return;
+    }
     try {
       const res = await fetch("/api/interview", {
         method: "POST",
@@ -61,6 +84,12 @@ export default function InterviewPage() {
   }
 
   async function generateScorecard(history: ChatMessage[]) {
+    if (IS_STATIC) {
+      await new Promise((r) => setTimeout(r, 1500));
+      setScorecard(DEMO_SCORECARD);
+      setPhase("scorecard");
+      return;
+    }
     try {
       const res = await fetch("/api/scorecard", {
         method: "POST",
