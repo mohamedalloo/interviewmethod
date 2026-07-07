@@ -32,7 +32,7 @@ jobs:
         env:
           STATIC_EXPORT: "1"
           NEXT_PUBLIC_STATIC: "1"
-          NEXT_PUBLIC_SITE_URL: https://mohamedalloo.github.io/interviewmethod
+          NEXT_PUBLIC_SITE_URL: https://interviewmethod.com
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
