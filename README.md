@@ -2,6 +2,8 @@
 
 Brutal AI mock interviews with a hiring-manager scorecard — the feedback nobody will give you.
 
+**Live demo:** https://mohamedalloo.github.io/interviewmethod/ (static in-browser demo mode, auto-deployed from `main` via GitHub Actions). For live AI interviews, deploy to a server host (Vercel) with `ANTHROPIC_API_KEY` set — the same codebase does both.
+
 ## Positioning (from market research, July 2026)
 
 - **Whitespace:** "Roast" positioning is proven for resumes but unclaimed for interviews. No candidate-side product's hero artifact is a hiring-manager-style scorecard.
