@@ -19,6 +19,10 @@
 
 interviewmethod is a practice tool, not an interview "copilot." It never feeds answers to candidates during real interviews and takes an explicit ethical stance against live-interview cheating tools.
 
+## Free question bank
+
+interviewmethod publishes a free interview question bank at /questions, covering 10 roles: software engineer, product manager, data analyst, registered nurse, sales/account executive, marketing manager, project manager, teacher, customer success manager, and federal-to-private-sector career changers. Each question includes what the interviewer is actually testing, the weak answer pattern hiring managers hear constantly, and what a strong answer sounds like.
+
 ## Who it's for
 
 Job seekers who want honest preparation: laid-off and mid-career professionals, career switchers, new grads, and anyone tired of rejection emails that never say why.

@@ -97,12 +97,20 @@ export default function Home() {
         <span className="font-bold tracking-tight text-lg">
           interview<span className="text-red-500">method</span>
         </span>
-        <Link
-          href="/interview"
-          className="rounded-lg bg-red-600 hover:bg-red-500 px-4 py-2 text-sm font-semibold transition-colors"
-        >
-          Start free interview
-        </Link>
+        <nav className="flex items-center gap-5">
+          <Link
+            href="/questions"
+            className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+          >
+            Question bank
+          </Link>
+          <Link
+            href="/interview"
+            className="rounded-lg bg-red-600 hover:bg-red-500 px-4 py-2 text-sm font-semibold transition-colors"
+          >
+            Start free interview
+          </Link>
+        </nav>
       </header>
 
       <main className="max-w-5xl mx-auto px-6">
@@ -340,8 +348,28 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className="py-10 text-center text-xs text-zinc-600 border-t border-zinc-900">
-          © 2026 interviewmethod. Brutal on purpose.
+        <footer className="py-10 border-t border-zinc-900">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-zinc-500 mb-4">
+            {[
+              ["software-engineer", "Software engineer questions"],
+              ["product-manager", "Product manager questions"],
+              ["registered-nurse", "Nursing interview questions"],
+              ["sales-account-executive", "Sales interview questions"],
+              ["teacher", "Teacher interview questions"],
+              ["federal-to-private", "Federal-to-private interviews"],
+            ].map(([slug, label]) => (
+              <Link
+                key={slug}
+                href={`/questions/${slug}`}
+                className="hover:text-red-400 transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <p className="text-center text-xs text-zinc-600">
+            © 2026 interviewmethod. Brutal on purpose.
+          </p>
         </footer>
       </main>
     </div>

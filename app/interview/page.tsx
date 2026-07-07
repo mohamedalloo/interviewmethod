@@ -11,6 +11,90 @@ const IS_STATIC = process.env.NEXT_PUBLIC_STATIC === "1";
 
 type Phase = "setup" | "interview" | "grading" | "scorecard";
 
+type SpeechRecognitionLike = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((e: { resultIndex: number; results: { length: number; [i: number]: { isFinal: boolean; [j: number]: { transcript: string } } } }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
+  return w.SpeechRecognition || w.webkitSpeechRecognition || null;
+}
+
+function drawShareCard(scorecard: Scorecard, role: string): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 630;
+  const ctx = canvas.getContext("2d")!;
+
+  ctx.fillStyle = "#09090b";
+  ctx.fillRect(0, 0, 1200, 630);
+
+  ctx.font = "bold 34px Georgia, serif";
+  ctx.fillStyle = "#fafafa";
+  ctx.fillText("interview", 70, 90);
+  ctx.fillStyle = "#ef4444";
+  ctx.fillText("method", 70 + ctx.measureText("interview").width, 90);
+
+  ctx.font = "22px Arial, sans-serif";
+  ctx.fillStyle = "#71717a";
+  ctx.fillText(`HIRING MANAGER SCORECARD · ${role.toUpperCase()}`.slice(0, 60), 70, 150);
+
+  const verdictColors: Record<string, string> = {
+    "Strong Hire": "#10b981",
+    Hire: "#059669",
+    "Lean Hire": "#f59e0b",
+    "No Hire": "#ef4444",
+    "Strong No Hire": "#b91c1c",
+  };
+  ctx.fillStyle = verdictColors[scorecard.verdict] || "#f59e0b";
+  const vw = 90 + scorecard.verdict.length * 34;
+  ctx.beginPath();
+  ctx.roundRect(70, 185, vw, 92, 14);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 56px Arial, sans-serif";
+  ctx.fillText(scorecard.verdict.toUpperCase(), 105, 250);
+
+  let y = 350;
+  ctx.font = "24px Arial, sans-serif";
+  for (const d of scorecard.dimensions.slice(0, 5)) {
+    ctx.fillStyle = "#d4d4d8";
+    ctx.fillText(d.name, 70, y);
+    ctx.fillStyle = "#27272a";
+    ctx.beginPath();
+    ctx.roundRect(420, y - 20, 500, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = d.score >= 7 ? "#10b981" : d.score >= 5 ? "#f59e0b" : "#ef4444";
+    ctx.beginPath();
+    ctx.roundRect(420, y - 20, Math.max(30, (d.score / 10) * 500), 22, 11);
+    ctx.fill();
+    ctx.fillStyle = "#fafafa";
+    ctx.font = "bold 24px Arial, sans-serif";
+    ctx.fillText(`${d.score}/10`, 945, y);
+    ctx.font = "24px Arial, sans-serif";
+    y += 52;
+  }
+
+  ctx.fillStyle = "#71717a";
+  ctx.font = "22px Arial, sans-serif";
+  ctx.fillText("The interview feedback nobody will give you.", 70, 590);
+  ctx.fillStyle = "#ef4444";
+  ctx.fillText("interviewmethod", 720, 590);
+
+  return canvas;
+}
+
 const VERDICT_COLORS: Record<Scorecard["verdict"], string> = {
   "Strong Hire": "bg-emerald-500",
   Hire: "bg-emerald-600",
@@ -33,11 +117,58 @@ export default function InterviewPage() {
   const [demo, setDemo] = useState(false);
   const [scorecard, setScorecard] = useState<Scorecard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    setSpeechSupported(getSpeechRecognition() !== null);
+  }, []);
+
+  function toggleRecording() {
+    if (recording) {
+      recognitionRef.current?.stop();
+      setRecording(false);
+      return;
+    }
+    const SR = getSpeechRecognition();
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "en-US";
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      let text = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) text += e.results[i][0].transcript;
+      }
+      if (text) setInput((prev) => (prev ? prev + " " : "") + text.trim());
+    };
+    rec.onend = () => setRecording(false);
+    rec.onerror = () => setRecording(false);
+    recognitionRef.current = rec;
+    rec.start();
+    setRecording(true);
+  }
+
+  function downloadShareCard() {
+    if (!scorecard) return;
+    const canvas = drawShareCard(scorecard, setup.role);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `interviewmethod-verdict-${scorecard.verdict.toLowerCase().replace(/\s+/g, "-")}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  }
 
   async function callInterviewer(history: ChatMessage[]) {
     setLoading(true);
@@ -267,6 +398,20 @@ export default function InterviewPage() {
                     }
                   }}
                 />
+                {speechSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleRecording}
+                    title={recording ? "Stop dictating" : "Answer by voice"}
+                    className={`rounded-lg border px-4 text-lg ${
+                      recording
+                        ? "border-red-500 bg-red-500/20 animate-pulse"
+                        : "border-zinc-700 hover:border-zinc-500"
+                    }`}
+                  >
+                    {recording ? "◉" : "🎙"}
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={loading || !input.trim()}
@@ -370,6 +515,12 @@ export default function InterviewPage() {
               className="rounded-lg bg-red-600 hover:bg-red-500 font-semibold px-6 py-3 text-sm"
             >
               Run it again
+            </button>
+            <button
+              onClick={downloadShareCard}
+              className="rounded-lg border border-red-500 text-red-300 hover:bg-red-500/10 font-semibold px-6 py-3 text-sm"
+            >
+              Download verdict card
             </button>
             <button
               onClick={() => window.print()}
